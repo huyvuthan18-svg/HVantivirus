@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+  <FileVersion major="1" minor="6" />
+  <Project>
+    <Option title="HVantivirus" />
+    <Option compiler="gcc" />
+    <Build>
+      <Target title="Release">
+        <Option output="bin/Release/HVantivirus" prefix_auto="1" extension_auto="1" />
+        <Option object_output="obj/Release/" />
+        <Option type="0" />
+        <Option compiler="gcc" />
+        <Compiler>
+          <Add option="-std=c++17" />
+          <Add option="-O2" />
+          <Add option="-Wall" />
+          <Add option="-mwindows" />
+        </Compiler>
+        <Linker>
+          <Add library="comctl32" />
+          <Add library="comdlg32" />
+          <Add library="shell32" />
+          <Add library="ole32" />
+          <Add library="advapi32" />
+          <Add library="bcrypt" />
+        </Linker>
+      </Target>
+      <Target title="Debug">
+        <Option output="bin/Debug/HVantivirus" prefix_auto="1" extension_auto="1" />
+        <Option object_output="obj/Debug/" />
+        <Option type="0" />
+        <Option compiler="gcc" />
+        <Compiler>
+          <Add option="-std=c++17" />
+          <Add option="-g" />
+          <Add option="-Wall" />
+          <Add option="-mwindows" />
+        </Compiler>
+        <Linker>
+          <Add library="comctl32" />
+          <Add library="comdlg32" />
+          <Add library="shell32" />
+          <Add library="ole32" />
+          <Add library="advapi32" />
+          <Add library="bcrypt" />
+        </Linker>
+      </Target>
+    </Build>
+    <Unit filename="src/main.cpp">
+      <Option compilerVar="CC" />
+    </Unit>
+    <Extensions />
+  </Project>
+</CodeBlocks_project_file>
