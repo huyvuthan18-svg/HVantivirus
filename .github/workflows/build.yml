@@ -1,0 +1,25 @@
+name: Build HVantivirus
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up MinGW
+        uses: egor-tensin/setup-mingw@v2
+        with:
+          platform: x64
+      - name: Build HVantivirus
+        shell: bash
+        working-directory: "HVantivirus-Next (1)/HVantivirus-Next"
+        run: |
+          mkdir -p bin/Release
+          g++ -std=c++17 -O2 -mwindows src/main.cpp -o bin/Release/HVantivirus.exe -lcomctl32 -lcomdlg32 -lshell32 -lole32 -ladvapi32 -lbcrypt
+      - name: Upload executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: HVantivirus-Windows
+          path: "HVantivirus-Next (1)/HVantivirus-Next/bin/Release/HVantivirus.exe"
