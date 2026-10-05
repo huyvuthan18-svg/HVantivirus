@@ -8,18 +8,25 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up MinGW
-        uses: egor-tensin/setup-mingw@v2
+      - name: Set up MinGW-w64 with MSYS2
+        uses: msys2/setup-msys2@v2
         with:
-          platform: x64
+          msystem: MINGW64
+          update: true
+          install: mingw-w64-x86_64-gcc
       - name: Build HVantivirus
-        shell: bash
+        shell: msys2 {0}
         working-directory: "HVantivirus-Next (1)/HVantivirus-Next"
         run: |
           mkdir -p bin/Release
-          g++ -std=c++17 -O2 -mwindows src/main.cpp -o bin/Release/HVantivirus.exe -lcomctl32 -lcomdlg32 -lshell32 -lole32 -ladvapi32 -lbcrypt
-      - name: Upload executable
+          g++ -std=c++17 -O2 -Wall -mwindows src/main.cpp -o bin/Release/HVantivirus.exe -lcomctl32 -lcomdlg32 -lshell32 -lole32 -ladvapi32 -lbcrypt
+          cp hv_logo.ico bin/Release/hv_logo.ico
+          cp hv_logo.png bin/Release/hv_logo.png
+      - name: Upload executable and logo
         uses: actions/upload-artifact@v4
         with:
           name: HVantivirus-Windows
-          path: "HVantivirus-Next (1)/HVantivirus-Next/bin/Release/HVantivirus.exe"
+          path: |
+            HVantivirus-Next (1)/HVantivirus-Next/bin/Release/HVantivirus.exe
+            HVantivirus-Next (1)/HVantivirus-Next/bin/Release/hv_logo.ico
+            HVantivirus-Next (1)/HVantivirus-Next/bin/Release/hv_logo.png
