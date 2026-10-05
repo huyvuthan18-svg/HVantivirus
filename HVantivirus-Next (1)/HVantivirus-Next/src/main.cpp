@@ -36,6 +36,7 @@ namespace fs = std::filesystem;
 
 static HINSTANCE g_inst = nullptr;
 static HWND g_main = nullptr;
+static HICON g_appIcon = nullptr;
 static HWND g_status = nullptr;
 static HWND g_progress = nullptr;
 static HWND g_progressText = nullptr;
@@ -594,8 +595,10 @@ static LRESULT CALLBACK WndProc(HWND h, UINT m, WPARAM w, LPARAM l) {
     case WM_CREATE:{
         INITCOMMONCONTROLSEX ic{sizeof(ic),ICC_PROGRESS_CLASS|ICC_LISTVIEW_CLASSES|ICC_STANDARD_CLASSES}; InitCommonControlsEx(&ic);
         HFONT font=(HFONT)GetStockObject(DEFAULT_GUI_FONT); HFONT big=CreateFontW(28,0,0,0,FW_BOLD,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_OUTLINE_PRECIS,CLIP_DEFAULT_PRECIS,CLEARTYPE_QUALITY,DEFAULT_PITCH|FF_DONTCARE,L"Segoe UI");
-        CreateWindowW(L"STATIC",L"HVantivirus",WS_CHILD|WS_VISIBLE,28,20,300,40,h,0,g_inst,0); HWND title=GetWindow(h,GW_CHILD);SetControlFont(title,big);
-        CreateWindowW(L"STATIC",L"Windows security scanner",WS_CHILD|WS_VISIBLE,31,58,300,22,h,0,g_inst,0);
+        HWND logo = CreateWindowW(L"STATIC",L"",WS_CHILD|WS_VISIBLE|SS_ICON,24,18,56,56,h,0,g_inst,0);
+        if (g_appIcon) SendMessageW(logo, STM_SETIMAGE, IMAGE_ICON, (LPARAM)g_appIcon);
+        HWND title = CreateWindowW(L"STATIC",L"HVantivirus",WS_CHILD|WS_VISIBLE,92,20,300,40,h,0,g_inst,0); SetControlFont(title,big);
+        CreateWindowW(L"STATIC",L"Windows security scanner",WS_CHILD|WS_VISIBLE,95,58,300,22,h,0,g_inst,0);
         HWND st=CreateWindowW(L"STATIC",L"PROTECTION ACTIVE",WS_CHILD|WS_VISIBLE|SS_CENTER,760,25,180,32,h,0,g_inst,0);SetControlFont(st,font);
         g_status=CreateWindowW(L"STATIC",L"Ready",WS_CHILD|WS_VISIBLE,30,95,800,26,h,0,g_inst,0);SetControlFont(g_status,font);
 
@@ -660,7 +663,7 @@ static LRESULT CALLBACK WndProc(HWND h, UINT m, WPARAM w, LPARAM l) {
             SetWindowTextW(g_status,L"HVantivirus — Scan finished");
         } return 0; }
     case WM_CLOSE: if(g_scanning){g_cancelScan=true;MessageBoxW(h,L"A scan is still running. Stop it first or wait for it to finish.",APP_NAME,MB_OK|MB_ICONINFORMATION);return 0;} DestroyWindow(h); return 0;
-    case WM_DESTROY: g_guardRunning=false; if(g_guardThread.joinable())g_guardThread.join(); PostQuitMessage(0); return 0;
+    case WM_DESTROY: g_guardRunning=false; if(g_guardThread.joinable())g_guardThread.join(); if(g_appIcon){DestroyIcon(g_appIcon);g_appIcon=nullptr;} PostQuitMessage(0); return 0;
     }
     return DefWindowProcW(h,m,w,l);
 }
@@ -668,8 +671,12 @@ static LRESULT CALLBACK WndProc(HWND h, UINT m, WPARAM w, LPARAM l) {
 int WINAPI wWinMain(HINSTANCE inst,HINSTANCE,LPWSTR,int show){
     g_inst=inst;EnsureDirectories(); LoadHashDefinitions();
     INITCOMMONCONTROLSEX ic{sizeof(ic),ICC_WIN95_CLASSES|ICC_PROGRESS_CLASS|ICC_LISTVIEW_CLASSES};InitCommonControlsEx(&ic);
-    WNDCLASSW wc{};wc.lpfnWndProc=WndProc;wc.hInstance=inst;wc.lpszClassName=L"HVantivirusMain";wc.hCursor=LoadCursorW(nullptr,IDC_ARROW);wc.hbrBackground=(HBRUSH)(COLOR_WINDOW+1);wc.hIcon=LoadIconW(nullptr,IDI_SHIELD);RegisterClassW(&wc);
+    wchar_t exePath[MAX_PATH]{};
+    GetModuleFileNameW(inst, exePath, MAX_PATH);
+    fs::path iconPath = fs::path(exePath).parent_path() / L"hv_logo.ico";
+    g_appIcon = (HICON)LoadImageW(nullptr, iconPath.c_str(), IMAGE_ICON, 48, 48, LR_LOADFROMFILE | LR_DEFAULTSIZE);
+    WNDCLASSW wc{};wc.lpfnWndProc=WndProc;wc.hInstance=inst;wc.lpszClassName=L"HVantivirusMain";wc.hCursor=LoadCursorW(nullptr,IDC_ARROW);wc.hbrBackground=(HBRUSH)(COLOR_WINDOW+1);wc.hIcon=g_appIcon?g_appIcon:LoadIconW(nullptr,IDI_SHIELD);RegisterClassW(&wc);
     g_main=CreateWindowW(wc.lpszClassName, L"HVantivirus — Windows Antivirus", WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX, CW_USEDEFAULT,CW_USEDEFAULT,870,735,nullptr,nullptr,inst,nullptr);
-    if(!g_main)return 1; DragAcceptFiles(g_main, TRUE); ShowWindow(g_main,show);UpdateWindow(g_main); PostMessageW(g_main,WM_COMMAND,MAKEWPARAM(105,0),0);
+    if(!g_main)return 1; if(g_appIcon){SendMessageW(g_main,WM_SETICON,ICON_BIG,(LPARAM)g_appIcon);SendMessageW(g_main,WM_SETICON,ICON_SMALL,(LPARAM)g_appIcon);} DragAcceptFiles(g_main, TRUE); ShowWindow(g_main,show);UpdateWindow(g_main); PostMessageW(g_main,WM_COMMAND,MAKEWPARAM(105,0),0);
     MSG msg{};while(GetMessageW(&msg,nullptr,0,0)>0){TranslateMessage(&msg);DispatchMessageW(&msg);}if(g_scanThread.joinable())g_scanThread.join();if(g_guardThread.joinable())g_guardThread.join();return (int)msg.wParam;
 }
